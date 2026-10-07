@@ -50,3 +50,7 @@ npm-debug.log*
 .env.*.local
 *.pem
 *.key
+
+data/
+*.mv.db
+
