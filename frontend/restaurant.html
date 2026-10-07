@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Menu - FoodExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+    <nav id="main-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm"></nav>
+
+    <div class="container my-4">
+        <!-- Restaurant Header Banner -->
+        <div id="restaurant-header" class="custom-card p-4 mb-4">
+            <div class="spinner-border text-danger" role="status"></div>
+        </div>
+
+        <!-- Navigation Tabs: Menu vs Reviews -->
+        <ul class="nav nav-pills mb-4" id="restaurant-tabs">
+            <li class="nav-item">
+                <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#tab-menu">
+                    <i class="fas fa-utensils me-1"></i> Food Menu
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-reviews">
+                    <i class="fas fa-star me-1"></i> Customer Reviews
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Menu Tab -->
+            <div class="tab-pane fade show active" id="tab-menu">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold mb-0">Menu Items</h4>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="veg-toggle" onchange="filterMenu()">
+                        <label class="form-check-label fw-bold" for="veg-toggle">Pure Veg Only 🌱</label>
+                    </div>
+                </div>
+
+                <div id="menu-grid" class="row g-4">
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border text-danger" role="status"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Tab -->
+            <div class="tab-pane fade" id="tab-reviews">
+                <div class="row">
+                    <div class="col-md-7">
+                        <h4 class="fw-bold mb-3">What Customers Say</h4>
+                        <div id="reviews-list">
+                            <p class="text-muted">Loading reviews...</p>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="custom-card p-4">
+                            <h5 class="fw-bold mb-3">Write a Review</h5>
+                            <p class="text-muted small">You can review restaurants after completing an order.</p>
+                            <form id="review-form">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Completed Order ID</label>
+                                    <input type="number" id="review-order-id" class="form-control" required placeholder="e.g. 1">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Rating (1 to 5 Stars)</label>
+                                    <select id="review-rating" class="form-select">
+                                        <option value="5">⭐⭐⭐⭐⭐ 5 - Excellent</option>
+                                        <option value="4">⭐⭐⭐⭐ 4 - Very Good</option>
+                                        <option value="3">⭐⭐⭐ 3 - Good</option>
+                                        <option value="2">⭐⭐ 2 - Fair</option>
+                                        <option value="1">⭐ 1 - Poor</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Your Feedback</label>
+                                    <textarea id="review-comment" class="form-control" rows="3" required placeholder="Tell others how delicious your food was..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Submit Review</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const restaurantId = params.get('id');
+        let fullMenu = [];
+
+        if (!restaurantId) {
+            window.location.href = '/restaurants.html';
+        }
+
+        async function loadRestaurant() {
+            try {
+                const r = await apiCall(`/restaurants/${restaurantId}`);
+                document.getElementById('restaurant-header').innerHTML = `
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <img src="${r.imageUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500'}" class="img-fluid rounded-3" style="max-height: 180px; width: 100%; object-fit: cover;">
+                        </div>
+                        <div class="col-md-9 mt-3 mt-md-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h2 class="fw-bold mb-1">${r.name}</h2>
+                                    <p class="text-muted mb-2">${r.description || 'Gourmet delicacies cooked fresh to order'}</p>
+                                    <p class="small text-secondary mb-2"><i class="fas fa-map-marker-alt text-danger me-1"></i>${r.address}</p>
+                                    <p class="small text-secondary mb-0"><i class="fas fa-phone text-success me-1"></i>${r.phone}</p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge-rating fs-6"><i class="fas fa-star me-1"></i>${r.rating} / 5.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Load Menu
+                fullMenu = await apiCall(`/foods/restaurant/${restaurantId}`);
+                renderMenuItems(fullMenu);
+
+                // Load Reviews
+                loadReviews();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderMenuItems(items) {
+            const grid = document.getElementById('menu-grid');
+            grid.innerHTML = '';
+
+            if (items.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-4 text-muted">No items available in this category.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const vegBadge = item.veg ? 
+                    '<span class="badge bg-success-subtle text-success border border-success me-2">🌱 Veg</span>' : 
+                    '<span class="badge bg-danger-subtle text-danger border border-danger me-2">🥩 Non-Veg</span>';
+
+                grid.innerHTML += `
+                    <div class="col-md-6">
+                        <div class="custom-card p-3 h-100 d-flex flex-column justify-content-between">
+                            <div class="d-flex justify-content-between">
+                                <div class="pe-3">
+                                    <div class="mb-1">${vegBadge}<small class="text-muted">${item.categoryName || ''}</small></div>
+                                    <h5 class="fw-bold mb-1">${item.name}</h5>
+                                    <h6 class="fw-bold text-dark mb-2">₹${item.price.toFixed(2)}</h6>
+                                    <p class="text-muted small mb-0">${item.description || ''}</p>
+                                </div>
+                                <div>
+                                    <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300'}" class="rounded-3" style="width: 100px; height: 100px; object-fit: cover;">
+                                </div>
+                            </div>
+                            <div class="text-end mt-3">
+                                <button class="btn btn-outline-danger btn-sm fw-bold px-4" onclick="addToCart(${item.id})">
+                                    <i class="fas fa-plus me-1"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterMenu() {
+            const pureVeg = document.getElementById('veg-toggle').checked;
+            const filtered = pureVeg ? fullMenu.filter(i => i.veg) : fullMenu;
+            renderMenuItems(filtered);
+        }
+
+        async function addToCart(foodItemId) {
+            if (!Auth.isLoggedIn()) {
+                showToast('Please log in to add items to your cart', 'warning');
+                setTimeout(() => window.location.href = '/login.html', 1200);
+                return;
+            }
+
+            try {
+                await apiCall('/cart/items', 'POST', { foodItemId, quantity: 1 });
+                showToast('Item added to cart!', 'success');
+                updateCartBadge();
+            } catch (e) {
+                // apiCall handles toast alert
+            }
+        }
+
+        async function loadReviews() {
+            try {
+                const reviews = await apiCall(`/reviews/restaurant/${restaurantId}`);
+                const list = document.getElementById('reviews-list');
+                list.innerHTML = '';
+                if (reviews.length === 0) {
+                    list.innerHTML = '<p class="text-muted">No reviews yet. Be the first to review!</p>';
+                    return;
+                }
+                reviews.forEach(rv => {
+                    list.innerHTML += `
+                        <div class="custom-card p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold mb-0">${rv.userName}</h6>
+                                <span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i>${rv.rating}</span>
+                            </div>
+                            <p class="mb-1 text-secondary">${rv.comment}</p>
+                            <small class="text-muted">${new Date(rv.createdAt).toLocaleDateString()}</small>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.getElementById('review-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!Auth.isLoggedIn()) {
+                showToast('Please login to leave a review', 'warning');
+                return;
+            }
+
+            const orderId = document.getElementById('review-order-id').value;
+            const rating = parseInt(document.getElementById('review-rating').value);
+            const comment = document.getElementById('review-comment').value.trim();
+
+            try {
+                await apiCall('/reviews', 'POST', {
+                    orderId: Number(orderId),
+                    restaurantId: Number(restaurantId),
+                    rating,
+                    comment
+                });
+                showToast('Review submitted successfully!', 'success');
+                document.getElementById('review-form').reset();
+                loadReviews();
+            } catch (e) {
+                // error handled by apiCall
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadRestaurant);
+    </script>
+</body>
+</html>

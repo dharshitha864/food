@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - FoodExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-light">
+
+    <nav id="main-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm"></nav>
+
+    <div class="container my-4">
+        <h3 class="fw-bold mb-4"><i class="fas fa-shield-alt text-success me-2"></i>Secure Checkout</h3>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 1. Delivery Address Card -->
+                <div class="custom-card p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0"><i class="fas fa-map-marker-alt text-danger me-2"></i>Select Delivery Address</h5>
+                        <button class="btn btn-outline-danger btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#newAddressModal">
+                            + Add New Address
+                        </button>
+                    </div>
+
+                    <div id="address-container" class="row g-3">
+                        <div class="col-12 text-center py-3">
+                            <div class="spinner-border text-danger" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Special Instructions -->
+                <div class="custom-card p-4 mb-4">
+                    <h5 class="fw-bold mb-3"><i class="fas fa-comment-alt text-primary me-2"></i>Special Instructions</h5>
+                    <textarea id="special-instructions" class="form-control" rows="2" placeholder="e.g. Ring the doorbell, leave at the door, less spicy, extra ketchup"></textarea>
+                </div>
+
+                <!-- 3. Safe Mock Payment System -->
+                <div class="custom-card p-4 mb-4">
+                    <h5 class="fw-bold mb-3"><i class="fas fa-credit-card text-success me-2"></i>Select Payment Method</h5>
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="fas fa-info-circle me-1"></i> <strong>Safe Mock Payment System:</strong> Educational demonstration mode. No real banking credentials are processed.
+                    </div>
+
+                    <div class="form-check p-3 border rounded mb-2 bg-white">
+                        <input class="form-check-input ms-0 me-3" type="radio" name="paymentMethod" id="pm-cod" value="COD" checked onchange="togglePaymentFields()">
+                        <label class="form-check-label fw-bold d-flex justify-content-between align-items-center w-100" for="pm-cod">
+                            <span><i class="fas fa-money-bill-wave text-success me-2"></i>Cash on Delivery (COD)</span>
+                            <span class="badge bg-secondary">Pay on Arrival</span>
+                        </label>
+                    </div>
+
+                    <div class="form-check p-3 border rounded mb-2 bg-white">
+                        <input class="form-check-input ms-0 me-3" type="radio" name="paymentMethod" id="pm-upi" value="UPI" onchange="togglePaymentFields()">
+                        <label class="form-check-label fw-bold d-flex justify-content-between align-items-center w-100" for="pm-upi">
+                            <span><i class="fas fa-mobile-alt text-primary me-2"></i>Mock UPI (Google Pay / PhonePe / Paytm)</span>
+                            <span class="badge bg-primary">Instant</span>
+                        </label>
+                    </div>
+
+                    <div class="form-check p-3 border rounded mb-2 bg-white">
+                        <input class="form-check-input ms-0 me-3" type="radio" name="paymentMethod" id="pm-card" value="CARD" onchange="togglePaymentFields()">
+                        <label class="form-check-label fw-bold d-flex justify-content-between align-items-center w-100" for="pm-card">
+                            <span><i class="fas fa-credit-card text-warning me-2"></i>Mock Credit / Debit Card</span>
+                            <span class="badge bg-warning text-dark">Visa / Master / RuPay</span>
+                        </label>
+                    </div>
+
+                    <div class="form-check p-3 border rounded mb-3 bg-white">
+                        <input class="form-check-input ms-0 me-3" type="radio" name="paymentMethod" id="pm-wallet" value="WALLET" onchange="togglePaymentFields()">
+                        <label class="form-check-label fw-bold d-flex justify-content-between align-items-center w-100" for="pm-wallet">
+                            <span><i class="fas fa-wallet text-info me-2"></i>Mock FoodExpress Wallet</span>
+                            <span class="badge bg-info text-dark">1-Click</span>
+                        </label>
+                    </div>
+
+                    <!-- Dynamic payment mock input details -->
+                    <div id="payment-details-box" class="p-3 bg-light rounded" style="display:none;">
+                        <div id="upi-details" style="display:none;">
+                            <label class="form-label small fw-bold">Virtual Payment Address (VPA)</label>
+                            <input type="text" class="form-control" value="customer@okaxis" readonly>
+                        </div>
+                        <div id="card-details" style="display:none;">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="form-label small fw-bold">Card Number</label>
+                                    <input type="text" class="form-control" value="4111 2222 3333 4444" readonly>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small fw-bold">CVV</label>
+                                    <input type="password" class="form-control" value="123" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkout Order Summary -->
+            <div class="col-lg-4">
+                <div class="custom-card p-4">
+                    <h5 class="fw-bold mb-3">Order Summary</h5>
+                    <div id="summary-items" class="mb-3">
+                        <div class="spinner-border spinner-border-sm text-danger" role="status"></div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Item Subtotal</span>
+                        <span id="summary-subtotal">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Delivery Fee</span>
+                        <span id="summary-delivery">₹0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">GST & Taxes</span>
+                        <span id="summary-tax">₹0.00</span>
+                    </div>
+                    <div id="discount-row" class="d-flex justify-content-between mb-2 text-success" style="display:none;">
+                        <span>Discount</span>
+                        <span id="summary-discount">-₹0.00</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="fw-bold fs-5">Final Amount</span>
+                        <span id="summary-total" class="fw-bold fs-5 text-danger">₹0.00</span>
+                    </div>
+
+                    <button id="place-order-btn" class="btn btn-primary w-100 py-3 fw-bold fs-6" onclick="placeOrder()">
+                        <i class="fas fa-check-circle me-2"></i>Place Order Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add New Address -->
+    <div class="modal fade" id="newAddressModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add Delivery Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="new-address-form">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Street Address / Flat / Floor</label>
+                            <input type="text" id="modal-street" class="form-control" required placeholder="Flat 402, Sunshine Apartments, MG Road">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">City</label>
+                                <input type="text" id="modal-city" class="form-control" required placeholder="New Delhi">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">State</label>
+                                <input type="text" id="modal-state" class="form-control" required placeholder="Delhi">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Postal Code</label>
+                            <input type="text" id="modal-postal" class="form-control" required placeholder="110001">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="modal-default" checked>
+                            <label class="form-check-label small" for="modal-default">Set as default address</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Save & Use Address</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        if (!Auth.isLoggedIn()) {
+            window.location.href = '/login.html';
+        }
+
+        let selectedAddressId = null;
+        let currentCart = null;
+
+        function togglePaymentFields() {
+            const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const box = document.getElementById('payment-details-box');
+            const upi = document.getElementById('upi-details');
+            const card = document.getElementById('card-details');
+
+            if (method === 'UPI') {
+                box.style.display = 'block';
+                upi.style.display = 'block';
+                card.style.display = 'none';
+            } else if (method === 'CARD') {
+                box.style.display = 'block';
+                upi.style.display = 'none';
+                card.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+                upi.style.display = 'none';
+                card.style.display = 'none';
+            }
+        }
+
+        async function initCheckout() {
+            try {
+                // Load cart details
+                currentCart = await apiCall('/cart');
+                if (!currentCart.items || currentCart.items.length === 0) {
+                    window.location.href = '/cart.html';
+                    return;
+                }
+
+                // Render cart summary
+                const itemsContainer = document.getElementById('summary-items');
+                itemsContainer.innerHTML = '';
+                currentCart.items.forEach(i => {
+                    itemsContainer.innerHTML += `
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>${i.quantity}x ${i.foodItemName}</span>
+                            <span>₹${i.subtotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('summary-subtotal').textContent = `₹${currentCart.subtotal.toFixed(2)}`;
+                document.getElementById('summary-delivery').textContent = `₹${currentCart.deliveryFee.toFixed(2)}`;
+                document.getElementById('summary-tax').textContent = `₹${currentCart.taxAmount.toFixed(2)}`;
+
+                if (currentCart.discountAmount > 0) {
+                    const dRow = document.getElementById('discount-row');
+                    dRow.style.display = 'flex';
+                    document.getElementById('summary-discount').textContent = `-₹${currentCart.discountAmount.toFixed(2)}`;
+                }
+
+                document.getElementById('summary-total').textContent = `₹${currentCart.grandTotal.toFixed(2)}`;
+
+                // Load addresses
+                await loadAddresses();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadAddresses() {
+            const container = document.getElementById('address-container');
+            try {
+                const addresses = await apiCall('/addresses');
+                container.innerHTML = '';
+
+                if (addresses.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-12 text-center py-3">
+                            <p class="text-muted mb-2">No delivery addresses found.</p>
+                            <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#newAddressModal">Add Your First Address</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                addresses.forEach((addr, idx) => {
+                    const isChecked = addr.default || idx === 0;
+                    if (isChecked && !selectedAddressId) {
+                        selectedAddressId = addr.id;
+                    }
+
+                    container.innerHTML += `
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded cursor-pointer ${isChecked ? 'border-danger bg-light' : ''}">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="selectedAddr" id="addr-${addr.id}" value="${addr.id}" ${isChecked ? 'checked' : ''} onchange="selectedAddressId = ${addr.id}">
+                                    <label class="form-check-label small fw-bold" for="addr-${addr.id}">
+                                        ${addr.default ? '<span class="badge bg-danger me-1">DEFAULT</span>' : ''}
+                                        ${addr.street}
+                                    </label>
+                                    <div class="small text-muted mt-1">${addr.city}, ${addr.state} - ${addr.postalCode}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                container.innerHTML = '<div class="col-12 text-danger">Failed to load addresses</div>';
+            }
+        }
+
+        document.getElementById('new-address-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const street = document.getElementById('modal-street').value.trim();
+            const city = document.getElementById('modal-city').value.trim();
+            const state = document.getElementById('modal-state').value.trim();
+            const postalCode = document.getElementById('modal-postal').value.trim();
+            const isDefault = document.getElementById('modal-default').checked;
+
+            try {
+                const created = await apiCall('/addresses', 'POST', { street, city, state, postalCode, isDefault });
+                selectedAddressId = created.id;
+                bootstrap.Modal.getInstance(document.getElementById('newAddressModal')).hide();
+                document.getElementById('new-address-form').reset();
+                showToast('Address saved successfully!', 'success');
+                await loadAddresses();
+            } catch (err) {}
+        });
+
+        async function placeOrder() {
+            if (!selectedAddressId) {
+                showToast('Please select or add a delivery address', 'warning');
+                return;
+            }
+
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const specialInstructions = document.getElementById('special-instructions').value.trim();
+            const btn = document.getElementById('place-order-btn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Confirming Order...';
+
+            try {
+                const order = await apiCall('/orders', 'POST', {
+                    addressId: selectedAddressId,
+                    paymentMethod,
+                    couponCode: currentCart.couponCode || null,
+                    specialInstructions
+                });
+
+                showToast('Order placed successfully! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = `/tracking.html?orderNumber=${order.orderNumber}`;
+                }, 1000);
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Place Order Now';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initCheckout);
+    </script>
+</body>
+</html>

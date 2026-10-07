@@ -1,0 +1,212 @@
+/* FoodExpress Design Theme */
+:root {
+    --primary-color: #ff4757;
+    --primary-hover: #e04050;
+    --secondary-color: #2ed573;
+    --dark-color: #2f3542;
+    --light-bg: #f8f9fa;
+    --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    --transition: all 0.25s ease-in-out;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--light-bg);
+    color: var(--dark-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--primary-color) !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Hero Section */
+.hero-banner {
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.95), rgba(255, 107, 129, 0.9)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600') center/cover;
+    color: white;
+    padding: 4rem 1rem;
+    border-radius: 1rem;
+    margin-bottom: 2.5rem;
+    box-shadow: var(--card-shadow);
+}
+
+/* Cards */
+.custom-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    background: white;
+    overflow: hidden;
+}
+
+.custom-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-img-top {
+    height: 190px;
+    object-fit: cover;
+}
+
+/* Badges */
+.badge-rating {
+    background-color: #2ed573;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 0.35rem 0.6rem;
+}
+
+.veg-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #2ed573;
+    padding: 2px;
+    border-radius: 2px;
+}
+.veg-icon::after {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    background-color: #2ed573;
+    border-radius: 50%;
+}
+
+.non-veg-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ff4757;
+    padding: 2px;
+    border-radius: 2px;
+}
+.non-veg-icon::after {
+    content: '';
+    display: block;
+    width: 8px;
+    height: 8px;
+    background-color: #ff4757;
+    border-radius: 50%;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition: var(--transition);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Order Stepper Tracker */
+.order-stepper {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: 2rem 0;
+}
+
+.order-stepper::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: #e9ecef;
+    z-index: 1;
+}
+
+.step-item {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    background: white;
+    padding: 0 0.5rem;
+}
+
+.step-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    font-weight: bold;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.step-item.active .step-circle {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.step-item.completed .step-circle {
+    background-color: var(--secondary-color);
+    color: white;
+    box-shadow: 0 0 0 2px var(--secondary-color);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.step-item.active .step-label {
+    color: var(--primary-color);
+}
+
+/* Toast Notifications */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}

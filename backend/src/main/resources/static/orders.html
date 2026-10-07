@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - FoodExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-light">
+
+    <nav id="main-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm"></nav>
+
+    <div class="container my-4">
+        <h3 class="fw-bold mb-4"><i class="fas fa-receipt text-danger me-2"></i>My Order History</h3>
+
+        <div id="orders-container">
+            <div class="text-center py-5">
+                <div class="spinner-border text-danger" role="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        if (!Auth.isLoggedIn()) {
+            window.location.href = '/login.html';
+        }
+
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'PLACED': return '<span class="badge bg-primary">Order Placed</span>';
+                case 'ACCEPTED': return '<span class="badge bg-info text-dark">Accepted</span>';
+                case 'PREPARING': return '<span class="badge bg-warning text-dark">Preparing Food</span>';
+                case 'READY_FOR_PICKUP': return '<span class="badge bg-info text-dark">Ready For Pickup</span>';
+                case 'DELIVERY_PARTNER_ASSIGNED': return '<span class="badge bg-secondary">Courier Assigned</span>';
+                case 'PICKED_UP': return '<span class="badge bg-primary">Picked Up</span>';
+                case 'OUT_FOR_DELIVERY': return '<span class="badge bg-warning text-dark">Out For Delivery</span>';
+                case 'DELIVERED': return '<span class="badge bg-success">Delivered</span>';
+                case 'CANCELLED': return '<span class="badge bg-danger">Cancelled</span>';
+                case 'REJECTED': return '<span class="badge bg-dark">Rejected</span>';
+                default: return `<span class="badge bg-secondary">${status}</span>`;
+            }
+        }
+
+        async function loadOrders() {
+            const container = document.getElementById('orders-container');
+            try {
+                const orders = await apiCall('/orders/my-orders');
+                container.innerHTML = '';
+
+                if (orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="custom-card p-5 text-center">
+                            <i class="fas fa-receipt fa-4x text-muted mb-3"></i>
+                            <h4>No orders placed yet</h4>
+                            <p class="text-muted">Order your favorite food today!</p>
+                            <a href="/restaurants.html" class="btn btn-primary px-4 mt-2">Find Food</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                orders.forEach(order => {
+                    let itemsSummary = order.items.map(i => `${i.quantity}x ${i.foodItemName}`).join(', ');
+                    const canCancel = order.status === 'PLACED' || order.status === 'ACCEPTED';
+
+                    container.innerHTML += `
+                        <div class="custom-card p-4 mb-3">
+                            <div class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-3">
+                                <div>
+                                    <h5 class="fw-bold mb-1">${order.restaurantName}</h5>
+                                    <p class="text-muted small mb-0">Order #${order.orderNumber} &bull; ${new Date(order.createdAt).toLocaleString()}</p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="mb-1">${getStatusBadge(order.status)}</div>
+                                    <h6 class="fw-bold text-danger mb-0">₹${order.finalAmount.toFixed(2)}</h6>
+                                </div>
+                            </div>
+
+                            <p class="small text-secondary mb-3"><i class="fas fa-utensils me-1"></i>${itemsSummary}</p>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    ${order.address ? `<small class="text-muted"><i class="fas fa-map-marker-alt me-1 text-danger"></i>Delivering to: ${order.address.street}, ${order.address.city}</small>` : ''}
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/tracking.html?orderNumber=${order.orderNumber}" class="btn btn-primary fw-bold">
+                                        <i class="fas fa-route me-1"></i> Track Order
+                                    </a>
+                                    ${canCancel ? `
+                                        <button class="btn btn-outline-danger fw-bold ms-2" onclick="cancelOrder(${order.id})">
+                                            Cancel
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                container.innerHTML = '<div class="alert alert-danger">Failed to load order history</div>';
+            }
+        }
+
+        async function cancelOrder(orderId) {
+            if (!confirm('Are you sure you want to cancel this order?')) return;
+            try {
+                await apiCall(`/orders/${orderId}/cancel`, 'PUT');
+                showToast('Order cancelled successfully', 'info');
+                loadOrders();
+            } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', loadOrders);
+    </script>
+</body>
+</html>

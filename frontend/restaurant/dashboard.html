@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Portal - FoodExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-light">
+
+    <nav id="main-nav" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm"></nav>
+
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-0"><i class="fas fa-store text-danger me-2"></i>Restaurant Manager Portal</h3>
+                <p id="restaurant-name-header" class="text-muted small mb-0">Managing incoming orders and food menu</p>
+            </div>
+            <button class="btn btn-outline-danger btn-sm" onclick="loadRestaurantData()"><i class="fas fa-sync-alt me-1"></i> Refresh Orders</button>
+        </div>
+
+        <ul class="nav nav-tabs mb-4" id="restTabs">
+            <li class="nav-item">
+                <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-orders">Incoming Orders</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-menu">Menu & Availability</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Orders Tab -->
+            <div class="tab-pane fade show active" id="tab-orders">
+                <div class="custom-card p-4">
+                    <h5 class="fw-bold mb-3">Kitchen & Order Pipeline</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Total</th>
+                                    <th>Current Status</th>
+                                    <th>Kitchen Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rest-orders-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Tab -->
+            <div class="tab-pane fade" id="tab-menu">
+                <div class="custom-card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Restaurant Menu Items</h5>
+                        <button class="btn btn-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#foodModal">+ Add Food Item</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Type</th>
+                                    <th>Availability</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rest-menu-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Food Item -->
+    <div class="modal fade" id="foodModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add New Food Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="food-form">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Dish Name</label>
+                            <input type="text" id="food-name" class="form-control" required placeholder="e.g. Paneer Tikka Roll">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Category</label>
+                            <select id="food-category" class="form-select" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Price (₹)</label>
+                            <input type="number" id="food-price" class="form-control" required min="1" step="0.5" placeholder="199">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Description</label>
+                            <textarea id="food-desc" class="form-control" rows="2" placeholder="Rich description of spices, ingredients..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Image URL</label>
+                            <input type="url" id="food-img" class="form-control" placeholder="https://images.unsplash.com/...">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="food-is-veg" checked>
+                            <label class="form-check-label small fw-bold" for="food-is-veg">Vegetarian Dish 🌱</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Add to Menu</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script>
+        const u = Auth.getUser();
+        if (!u || (u.role !== 'ROLE_RESTAURANT_ADMIN' && u.role !== 'ROLE_SYSTEM_ADMIN')) {
+            alert('Access Denied: Requires Restaurant Admin role');
+            window.location.href = '/login.html';
+        }
+
+        let currentRestaurantId = null;
+
+        async function loadRestaurantData() {
+            try {
+                // Find restaurants owned by current user
+                let myRestaurants = await apiCall('/restaurant-admin/restaurants/my-restaurants');
+                if (myRestaurants.length === 0) {
+                    // Fallback for demo: load first restaurant
+                    myRestaurants = await apiCall('/restaurants');
+                }
+
+                const myRest = myRestaurants[0];
+                currentRestaurantId = myRest.id;
+                document.getElementById('restaurant-name-header').textContent = `Managing: ${myRest.name}`;
+
+                // Load Orders
+                const orders = await apiCall(`/orders/restaurant/${currentRestaurantId}`);
+                const oTable = document.getElementById('rest-orders-table');
+                oTable.innerHTML = '';
+                if (orders.length === 0) {
+                    oTable.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No incoming orders yet.</td></tr>';
+                } else {
+                    orders.forEach(o => {
+                        const items = o.items.map(i => `${i.quantity}x ${i.foodItemName}`).join(', ');
+                        let actionButtons = '';
+
+                        if (o.status === 'PLACED') {
+                            actionButtons = `
+                                <button class="btn btn-sm btn-success me-1" onclick="updateOrderStatus(${o.id}, 'ACCEPTED')">Accept</button>
+                                <button class="btn btn-sm btn-danger" onclick="updateOrderStatus(${o.id}, 'REJECTED')">Reject</button>
+                            `;
+                        } else if (o.status === 'ACCEPTED') {
+                            actionButtons = `<button class="btn btn-sm btn-warning" onclick="updateOrderStatus(${o.id}, 'PREPARING')">Start Preparing</button>`;
+                        } else if (o.status === 'PREPARING') {
+                            actionButtons = `<button class="btn btn-sm btn-info text-white" onclick="updateOrderStatus(${o.id}, 'READY_FOR_PICKUP')">Ready For Pickup</button>`;
+                        } else {
+                            actionButtons = `<span class="badge bg-secondary">${o.status}</span>`;
+                        }
+
+                        oTable.innerHTML += `
+                            <tr>
+                                <td class="fw-bold">${o.orderNumber}</td>
+                                <td>${o.customerName}</td>
+                                <td class="small text-muted">${items}</td>
+                                <td class="fw-bold">₹${o.finalAmount.toFixed(2)}</td>
+                                <td><span class="badge bg-primary">${o.status}</span></td>
+                                <td>${actionButtons}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Load Menu Items
+                const menu = await apiCall(`/restaurant-admin/foods/restaurant/${currentRestaurantId}`);
+                const mTable = document.getElementById('rest-menu-table');
+                mTable.innerHTML = '';
+                menu.forEach(item => {
+                    mTable.innerHTML += `
+                        <tr>
+                            <td class="fw-bold">${item.name}</td>
+                            <td>${item.categoryName || 'General'}</td>
+                            <td>₹${item.price.toFixed(2)}</td>
+                            <td>${item.veg ? '🌱 Veg' : '🥩 Non-Veg'}</td>
+                            <td>
+                                <span class="badge ${item.available ? 'bg-success' : 'bg-secondary'}">${item.available ? 'Available' : 'Sold Out'}</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm ${item.available ? 'btn-outline-secondary' : 'btn-outline-success'} me-1" onclick="toggleFood(${item.id})">
+                                    ${item.available ? 'Mark Out of Stock' : 'Mark Available'}
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteFood(${item.id})"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                // Load categories into modal
+                const cats = await apiCall('/categories');
+                const catSelect = document.getElementById('food-category');
+                catSelect.innerHTML = '';
+                cats.forEach(c => {
+                    catSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function updateOrderStatus(orderId, status) {
+            try {
+                await apiCall(`/orders/${orderId}/status`, 'PUT', { status });
+                showToast(`Order status updated to ${status}!`, 'success');
+                loadRestaurantData();
+            } catch (e) {}
+        }
+
+        async function toggleFood(id) {
+            try {
+                await apiCall(`/restaurant-admin/foods/${id}/availability`, 'PATCH');
+                showToast('Availability updated', 'info');
+                loadRestaurantData();
+            } catch (e) {}
+        }
+
+        async function deleteFood(id) {
+            if (!confirm('Delete this food item from menu?')) return;
+            try {
+                await apiCall(`/restaurant-admin/foods/${id}`, 'DELETE');
+                showToast('Food item removed', 'info');
+                loadRestaurantData();
+            } catch (e) {}
+        }
+
+        document.getElementById('food-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('food-name').value.trim();
+            const categoryId = Number(document.getElementById('food-category').value);
+            const price = parseFloat(document.getElementById('food-price').value);
+            const description = document.getElementById('food-desc').value.trim();
+            const imageUrl = document.getElementById('food-img').value.trim() || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300';
+            const isVeg = document.getElementById('food-is-veg').checked;
+
+            try {
+                await apiCall('/restaurant-admin/foods', 'POST', {
+                    restaurantId: currentRestaurantId,
+                    categoryId,
+                    name,
+                    price,
+                    description,
+                    imageUrl,
+                    isVeg,
+                    isAvailable: true
+                });
+                bootstrap.Modal.getInstance(document.getElementById('foodModal')).hide();
+                document.getElementById('food-form').reset();
+                showToast('Food item added to menu!', 'success');
+                loadRestaurantData();
+            } catch (e) {}
+        });
+
+        document.addEventListener('DOMContentLoaded', loadRestaurantData);
+    </script>
+</body>
+</html>
