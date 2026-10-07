@@ -1,5 +1,5 @@
 // FoodExpress API Client & Frontend Utilities
-const API_BASE = window.location.port === '8080' ? '/api' : 'http://localhost:8080/api';
+const API_BASE = window.location.protocol.startsWith('http') ? `${window.location.origin}/api` : 'http://localhost:8085/api';
 
 const Auth = {
     getToken() {

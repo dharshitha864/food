@@ -30,7 +30,7 @@ public class Restaurant {
     @Column(length = 100)
     private String email;
 
-    @Column(precision = 2, scale = 1)
+    @Column
     private Double rating = 4.0;
 
     @Column(name = "is_active", nullable = false)

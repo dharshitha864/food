@@ -30,14 +30,14 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: ${DB_NAME:-foodexpress_db}
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${DB_NAME:-foodexpress_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_DRIVER: com.mysql.cj.jdbc.Driver
       DB_USER: ${DB_USER:-root}
       DB_PASSWORD: ${DB_PASSWORD:-root123}
       JWT_SECRET: ${JWT_SECRET:-FoodExpressSuperSecretSigningKeyForJwtSecurityTokens2026SecureKeyWithAtLeast256BitsLength}
     ports:
-      - "8080:8080"
+      - "8085:8085"
     networks:
       - foodexpress-net
 
